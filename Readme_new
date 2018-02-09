@@ -1,0 +1,20 @@
+IAM Roles
+This repository contains the required component and application scripts to setup, configure and maintain the relevant IAM roles and policies on an AWS account. The configuration is in matestsecurity or coresecurity conf repo.
+Description
+The configuration is in matestsecurity or coresecurity conf repo in iamroles directory, and is a JSON-formatted file that defines the individual roles that should be provisioned on an account. Each file in this directory is named as per the standard account naming convention. It is automatically translated to the relevant AWS account number. Needless to say, before this repo can be executed against a specific account, it must already exist as a sub-account of our master billing account. In addition to above file also is terraform file defines any static roles that must exists in the account. This is in subdir roles/static Also if there are iam user to be created then that is added users//.tf
+Where possible, we should be using AWS provided "canned policies", but this is not always possible. If you need to provide your own policy or trust configuration, this is provided in the AWS standard JSON format in the relevant policies/action or policies/trust directory.
+### Component Repository Layout |Directory|Description of Contents| |---------|-----------------------| |iam/policies/action|This is a list of action policies ("Deny access to ec2:CreateSecurityGroup") that can be applied to specific roles.| |iam/policies/trust|This is a list of trust policies ("Permit access from account 1234567") that can be applied to specific roles.|
+### Config Repository Layout
+Directory
+Description of Contents
+iam/roles Per-role configuration files. This defines the structure of the roles, including any custom policies (trust or action), as well as any canned AWS policies that should be applied to the role. iamroles/deploy//roles/static This is a static roles terraform file that is applied to this account in addition to above roles. iamroles/deploy//users/ This is file containing the users as explianed below. 
+### Usage There is a single build.sh script in the root of the repository that takes an action and an account name to operate on.
+The action can be one of plan, apply, destroy, destroyplan. It's not recommended that you run `destroy', for reasons that I hope are obvious. To run the code locally an env variable VARDIR is to be set to the location of conf
+e.g export VARDIR=/iamroles/deploy/matestservices
+Execute the script as follows: ./build.sh apply matestservices
+It is expected that your environment contains the relevant credentials (either through instance keys, access keys or a configured AWS_PROFILE environment variable) to permit the relevant AWS/Terraform commands that this script calls to function correctly.
+Config and Workflows
+When build.sh is called files from config repo are copied the component iam/accounts and iam directory. In future further improvement is needed to avoid this copy.
+User Accounts
+Unfortunately, we still have some legacy technologies that require a user account to exist to be able to generate access keys, use passwords, etc. All user account definitions should live under iam/users/<account>, with a single .tf file named after the user (for example, teamsite.tf). This file should contain all the relevant terraform code to instantiate the user and configure any specific policies that it might require.
+This means that in order to have the teamsite user deployed to the npoutage account, you would create in conf repo file iam/users/npoutage/teamsite.tf under iamroles\deploy\npoutagepage
